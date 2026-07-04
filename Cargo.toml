@@ -1,0 +1,25 @@
+[package]
+name = "streaming_quotes"
+version = "0.1.0"
+edition = "2021"
+description = "Client-server system for streaming stock quotes"
+authors = ["Your Name <your.email@example.com>"]
+
+[dependencies]
+# Генерация случайных чисел для создания котировок
+rand = "0.8"
+
+[dev-dependencies]
+# Для создания временных файлов в тестах
+tempfile = "3.0"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "server"
+path = "src/bin/server.rs"
+
+[[bin]]
+name = "client"
+path = "src/bin/client.rs"
