@@ -29,47 +29,47 @@ fn main() -> std::io::Result<()> {
     
     // Получаем параметры из аргументов
     let server_addr = args[1].parse::<SocketAddr>()
-        .expect("❌ Invalid server address format. Use: 127.0.0.1:7878");
+        .expect(" Invalid server address format. Use: 127.0.0.1:7878");
     
     let local_port = args[2].parse::<u16>()
-        .expect("❌ Invalid port number");
+        .expect("Invalid port number");
     
     let tickers_file = &args[3];
     
-    println!("🚀 Starting Quote Client v1.0");
-    println!("🖥️  Server: {}", server_addr);
-    println!("🔌 Local UDP port: {}", local_port);
-    println!("📄 Tickers file: {}", tickers_file);
+    println!(" Starting Quote Client v1.0");
+    println!("  Server: {}", server_addr);
+    println!(" Local UDP port: {}", local_port);
+    println!(" Tickers file: {}", tickers_file);
     
     // Читаем тикеры из файла
     let tickers = match tickers::read_tickers_from_file(tickers_file) {
         Ok(t) => {
-            println!("📊 Loaded {} tickers", t.len());
+            println!(" Loaded {} tickers", t.len());
             t
         }
         Err(e) => {
-            eprintln!("❌ Failed to read tickers file: {}", e);
+            eprintln!(" Failed to read tickers file: {}", e);
             std::process::exit(1);
         }
     };
     
     let tickers_str = tickers.join(",");
-    println!("📊 Requesting tickers: {}", tickers_str);
+    println!(" Requesting tickers: {}", tickers_str);
     
     // Создаем UDP сокет для приема котировок
     let udp_socket = UdpSocket::bind(format!("0.0.0.0:{}", local_port))?;
     let local_addr = udp_socket.local_addr()?;
-    println!("📡 Listening for quotes on {}", local_addr);
+    println!(" Listening for quotes on {}", local_addr);
     
     // Подключаемся к серверу по TCP
-    println!("🔌 Connecting to server at {}", server_addr);
+    println!(" Connecting to server at {}", server_addr);
     let mut stream = match TcpStream::connect(server_addr) {
         Ok(s) => {
-            println!("✅ Connected to server");
+            println!(" Connected to server");
             s
         }
         Err(e) => {
-            eprintln!("❌ Failed to connect to server: {}", e);
+            eprintln!(" Failed to connect to server: {}", e);
             std::process::exit(1);
         }
     };
@@ -77,27 +77,27 @@ fn main() -> std::io::Result<()> {
     // Отправляем команду STREAM
     let command = format!("STREAM {} {}\n", local_addr, tickers_str);
     if let Err(e) = stream.write_all(command.as_bytes()) {
-        eprintln!("❌ Failed to send STREAM command: {}", e);
+        eprintln!(" Failed to send STREAM command: {}", e);
         std::process::exit(1);
     }
-    println!("📤 STREAM command sent");
+    println!(" STREAM command sent");
     
     // Читаем ответ сервера
     let mut reader = BufReader::new(&stream);
     let mut response = String::new();
     
     if let Err(e) = reader.read_line(&mut response) {
-        eprintln!("❌ Failed to read server response: {}", e);
+        eprintln!(" Failed to read server response: {}", e);
         std::process::exit(1);
     }
     
     // Обрабатываем ответ
     match ServerResponse::parse(&response) {
         ServerResponse::Ok => {
-            println!("✅ Subscription successful!");
+            println!(" Subscription successful!");
         }
         ServerResponse::Error(msg) => {
-            eprintln!("❌ Server error: {}", msg);
+            eprintln!(" Server error: {}", msg);
             std::process::exit(1);
         }
     }
@@ -107,10 +107,10 @@ fn main() -> std::io::Result<()> {
     thread::spawn(move || {
         send_pings(server_addr_clone);
     });
-    println!("💓 PING sender started (every {}s)", PING_INTERVAL_SECS);
+    println!(" PING sender started (every {}s)", PING_INTERVAL_SECS);
     
     // Основной поток - прием и вывод котировок
-    println!("📊 Waiting for quotes...");
+    println!("Waiting for quotes...");
     println!("Press Ctrl+C to stop\n");
     
     receive_quotes(udp_socket);
@@ -140,7 +140,7 @@ fn send_pings(server_addr: SocketAddr) {
     let socket = match UdpSocket::bind("0.0.0.0:0") {
         Ok(s) => s,
         Err(e) => {
-            eprintln!("❌ Failed to create PING socket: {}", e);
+            eprintln!(" Failed to create PING socket: {}", e);
             return;
         }
     };
@@ -149,9 +149,9 @@ fn send_pings(server_addr: SocketAddr) {
         thread::sleep(Duration::from_secs(PING_INTERVAL_SECS));
         
         if let Err(e) = socket.send_to(b"PING\n", server_addr) {
-            eprintln!("⚠️  Failed to send PING: {}", e);
+            eprintln!("  Failed to send PING: {}", e);
         } else {
-            println!("💓 PING sent");
+            println!(" PING sent");
         }
     }
 }
@@ -175,7 +175,7 @@ fn receive_quotes(socket: UdpSocket) {
                         Ok(quote) => {
                             quote_counter += 1;
                             // Красиво выводим котировку
-                            println!("📈 #{:4} | {} | ${:8.2} | Vol: {:6} | {}", 
+                            println!("#{:4} | {} | ${:8.2} | Vol: {:6} | {}", 
                                 quote_counter,
                                 quote.ticker,
                                 quote.price,
@@ -184,13 +184,13 @@ fn receive_quotes(socket: UdpSocket) {
                             );
                         }
                         Err(e) => {
-                            eprintln!("⚠️  Failed to parse quote: {} (raw: {})", e, trimmed);
+                            eprintln!("  Failed to parse quote: {} (raw: {})", e, trimmed);
                         }
                     }
                 }
             }
             Err(e) => {
-                eprintln!("❌ UDP receive error: {}", e);
+                eprintln!("UDP receive error: {}", e);
             }
         }
     }

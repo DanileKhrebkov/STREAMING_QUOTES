@@ -60,19 +60,19 @@ cargo run --bin client -- 127.0.0.1:7878 9000 assets/tickers.txt
 
 Пример вывода клиента:
 ```
-🚀 Starting Quote Client v1.0
-🖥️  Server: 127.0.0.1:7878
-🔌 Local UDP port: 9000
-📄 Tickers file: assets/tickers.txt
-📊 Loaded 3 tickers
-📊 Requesting tickers: AAPL,TSLA,MSFT
-📡 Listening for quotes on 0.0.0.0:9000
-🔌 Connecting to server at 127.0.0.1:7878
-✅ Connected to server
-📤 STREAM command sent
-✅ Subscription successful!
-💓 PING sender started (every 2s)
-📊 Waiting for quotes...
+ Starting Quote Client v1.0
+  Server: 127.0.0.1:7878
+ Local UDP port: 9000
+ Tickers file: assets/tickers.txt
+ Loaded 3 tickers
+ Requesting tickers: AAPL,TSLA,MSFT
+ Listening for quotes on 0.0.0.0:9000
+ Connecting to server at 127.0.0.1:7878
+ Connected to server
+ STREAM command sent
+ Subscription successful!
+ PING sender started (every 2s)
+ Waiting for quotes...
 Press Ctrl+C to stop
 
 📈 #   1 | AAPL    | $  150.25 | Vol:   2345 | 1234567890

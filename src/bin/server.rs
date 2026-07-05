@@ -42,18 +42,18 @@ struct Subscription {
 
 /// Точка входа в программу сервера
 fn main() -> std::io::Result<()> {
-    println!("🚀 Starting Quote Server v1.0");
-    println!("📡 TCP port: {}", DEFAULT_TCP_PORT);
+    println!(" Starting Quote Server v1.0");
+    println!(" TCP port: {}", DEFAULT_TCP_PORT);
     
     // Загружаем справочник тикеров
     let available_tickers = match tickers::read_tickers_from_file("assets/tickers.txt") {
         Ok(tickers) => {
-            println!("📊 Loaded {} tickers from file", tickers.len());
+            println!(" Loaded {} tickers from file", tickers.len());
             tickers
         }
         Err(e) => {
-            eprintln!("⚠️  Warning: Could not read tickers file: {}", e);
-            eprintln!("📊 Using default tickers for testing");
+            eprintln!("  Warning: Could not read tickers file: {}", e);
+            eprintln!(" Using default tickers for testing");
             vec!["AAPL".to_string(), "TSLA".to_string(), "MSFT".to_string()]
         }
     };
@@ -61,7 +61,7 @@ fn main() -> std::io::Result<()> {
     // Создаем UDP сокет для приема PING
     let ping_socket = UdpSocket::bind("0.0.0.0:0")?;
     let ping_port = ping_socket.local_addr()?.port();
-    println!("💓 PING listener on port {}", ping_port);
+    println!(" PING listener on port {}", ping_port);
     
     // Инициализируем состояние сервера
     let state = Arc::new(Mutex::new(HashMap::<SocketAddr, Subscription>::new()));
@@ -74,39 +74,39 @@ fn main() -> std::io::Result<()> {
     thread::spawn(move || {
         generate_quotes(generator_tx, available_tickers_clone);
     });
-    println!("🔄 Quote generator started");
+    println!(" Quote generator started");
     
     // Запускаем рассыльщик котировок
     let state_clone = state.clone();
     thread::spawn(move || {
         distribute_quotes(generator_rx, state_clone);
     });
-    println!("📤 Quote distributor started");
+    println!(" Quote distributor started");
     
     // Запускаем обработчик PING
     let state_clone = state.clone();
     thread::spawn(move || {
         handle_pings(ping_socket, state_clone);
     });
-    println!("💓 PING handler started");
+    println!(" PING handler started");
     
     // Запускаем проверку таймаутов
     let state_clone = state.clone();
     thread::spawn(move || {
         check_timeouts(state_clone);
     });
-    println!("⏰ Timeout checker started");
+    println!(" Timeout checker started");
     
     // Запускаем TCP сервер
     let listener = TcpListener::bind(format!("0.0.0.0:{}", DEFAULT_TCP_PORT))?;
-    println!("✅ Server is ready and listening");
+    println!(" Server is ready and listening");
     
     // Основной цикл обработки подключений
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
                 let addr = stream.peer_addr().unwrap_or_else(|_| "unknown".parse().unwrap());
-                println!("🔌 New TCP connection from {}", addr);
+                println!("New TCP connection from {}", addr);
                 
                 let state_clone = state.clone();
                 let available_tickers_clone = available_tickers.clone();
@@ -117,7 +117,7 @@ fn main() -> std::io::Result<()> {
                 });
             }
             Err(e) => {
-                eprintln!("❌ Connection failed: {}", e);
+                eprintln!(" Connection failed: {}", e);
             }
         }
     }
@@ -204,7 +204,7 @@ fn distribute_quotes(
                 if let Ok(socket) = UdpSocket::bind("0.0.0.0:0") {
                     let message = format!("{}\n", quote.to_wire_line());
                     if let Err(e) = socket.send_to(message.as_bytes(), udp_addr) {
-                        eprintln!("⚠️  Failed to send quote to {}: {}", udp_addr, e);
+                        eprintln!("  Failed to send quote to {}: {}", udp_addr, e);
                     }
                 }
             }
@@ -229,13 +229,13 @@ fn handle_pings(socket: UdpSocket, state: Arc<Mutex<HashMap<SocketAddr, Subscrip
                         let mut state = state.lock().unwrap();
                         if let Some(sub) = state.get_mut(&src_addr) {
                             sub.last_ping = Instant::now();
-                            println!("💓 PING received from {}", src_addr);
+                            println!(" PING received from {}", src_addr);
                         }
                     }
                 }
             }
             Err(e) => {
-                eprintln!("❌ PING receive error: {}", e);
+                eprintln!(" PING receive error: {}", e);
             }
         }
     }
@@ -261,7 +261,7 @@ fn check_timeouts(state: Arc<Mutex<HashMap<SocketAddr, Subscription>>>) {
         
         // Удаляем просроченные подписки
         for addr in to_remove {
-            println!("⏰ Removing subscription for {} (timeout)", addr);
+            println!(" Removing subscription for {} (timeout)", addr);
             state.remove(&addr);
         }
     }
@@ -292,7 +292,7 @@ fn handle_client(
     
     match reader.read_line(&mut line) {
         Ok(0) => {
-            println!("⚠️  Client {} closed connection", addr);
+            println!("  Client {} closed connection", addr);
             return;
         }
         Ok(_) => {
@@ -308,7 +308,7 @@ fn handle_client(
                         );
                         // Получаем mutable доступ к stream через reader
                         let _ = reader.get_mut().write_all(response.to_wire().as_bytes());
-                        println!("❌ Client {} requested unknown tickers: {:?}", addr, unknown_tickers);
+                        println!(" Client {} requested unknown tickers: {:?}", addr, unknown_tickers);
                         return;
                     }
                     
@@ -331,7 +331,7 @@ fn handle_client(
                     // Отправляем подтверждение через mutable доступ к stream
                     let _ = reader.get_mut().write_all(ServerResponse::Ok.to_wire().as_bytes());
                     
-                    println!("✅ Subscription registered for {}: {:?}", cmd.udp_addr, cmd.tickers);
+                    println!(" Subscription registered for {}: {:?}", cmd.udp_addr, cmd.tickers);
                     
                     // Ждем закрытия соединения
                     let mut keep_alive = String::new();
@@ -341,7 +341,7 @@ fn handle_client(
                     {
                         let mut state = state.lock().unwrap();
                         state.remove(&cmd.udp_addr);
-                        println!("🔌 Subscription removed for {}", cmd.udp_addr);
+                        println!("Subscription removed for {}", cmd.udp_addr);
                     }
                 }
                 Ok(ClientMessage::Ping) => {
@@ -352,12 +352,12 @@ fn handle_client(
                 Err(e) => {
                     let response = ServerResponse::Error(format!("invalid command: {}", e));
                     let _ = reader.get_mut().write_all(response.to_wire().as_bytes());
-                    println!("❌ Invalid command from {}: {}", addr, e);
+                    println!(" Invalid command from {}: {}", addr, e);
                 }
             }
         }
         Err(e) => {
-            eprintln!("❌ Error reading from {}: {}", addr, e);
+            eprintln!(" Error reading from {}: {}", addr, e);
         }
     }
 }
